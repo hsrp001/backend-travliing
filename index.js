@@ -20,10 +20,10 @@ const jwtSecret = 'fasefraw4r5r3wq45wdfgw34twdfg';
 app.use(cookieParser());
 app.use(express.json())
 app.use('/uploads',express.static(__dirname+'/uploads'))
-app.use(cors({
-    origin:"https://mermorymakers.netlify.app",
-    credentials:true
-}))
+  app.use(cors({
+      origin:process.env.BASEurl,
+      credentials:true
+  }))
 
 Mongoose.connect(process.env.Mongooseurl, {
   useNewUrlParser: true,
