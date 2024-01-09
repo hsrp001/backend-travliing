@@ -19,17 +19,11 @@ const jwtSecret = 'fasefraw4r5r3wq45wdfgw34twdfg';
 
 app.use(cookieParser());
 app.use(express.json())
+app.use(express.urlencoded({extended:false}))
 app.use('/uploads',express.static(__dirname+'/uploads'))
-  app.use(cors({
-      origin:process.env.BASEurl,
-      credentials:true
-  }))
+  app.use(cors())
 
-Mongoose.connect(process.env.Mongooseurl, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  
-})
+Mongoose.connect(process.env.Mongooseurl)
 .then(() => {
   console.log('MongoDB connected successfully');
 })
@@ -60,6 +54,7 @@ app.get('/test',(req,res)=>{
 
 app.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
+ 
     try {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
