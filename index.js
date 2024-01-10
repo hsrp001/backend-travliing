@@ -8,12 +8,13 @@ const Place = require('./models/Place.js');
 const Booking = require('./models/Booking.js');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
-const multer = require('multer')
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const bcrypt = require("bcryptjs")
 const fs = require('fs')
 const imageDownloader = require('image-downloader')
 const paths = require('path')
-
+const cloudinary = require('cloudinary').v2;
 
 const jwtSecret = 'fasefraw4r5r3wq45wdfgw34twdfg';
 
@@ -40,6 +41,12 @@ function getUserDataFromReq(req) {
   });
 }
 
+
+cloudinary.config({ 
+  cloud_name: process.env.cloudname, 
+  api_key: process.env.cloudkey, 
+  api_secret: process.env.Cloudpassword
+});
 
 app.get('/',(req,res)=>{
     res.json("succes")
@@ -126,35 +133,51 @@ app.post('/logout',(req,res)=>{
     res.cookie('token','').json(true)
 
 })
-app.post('/upload-by-link', async(req,res)=>{
-const {link}=req.body
-const newName = 'photo' + Date.now() + '.jpg'
-await imageDownloader.image({
-    url:link,
-    dest:__dirname+'/uploads/' +newName,
-})
+// app.post('/upload-by-link', async(req,res)=>{
+// const {link}=req.body
+// const newName = 'photo' + Date.now() + '.jpg'
+// await imageDownloader.image({
+//     url:link,
+//     dest:__dirname+'/uploads/' +newName,
+// })
 
-res.json(newName)
+// res.json(newName)
 
-})
-const photosMiddleware = multer({dest:'uploads/'});
+// })
 
-
-app.post('/upload', photosMiddleware.array('photos', 100), async (req, res) => {
-  const uploadedFiles = [];
-  for (let i = 0; i < req.files.length; i++) {
-    const { path, originalname } = req.files[i];
-    const parts = originalname.split('.');
-    const ext = parts[parts.length - 1];
-    const newpath = path + '.' + ext;
-    fs.renameSync(path, newpath);
-
-    // Use string manipulation to get the filename
-    const filename = paths.basename(newpath);
-    uploadedFiles.push(filename);
+app.post('/upload-by-link', async (req, res) => {
+  const { link } = req.body;
+  const newName = 'photo' + Date.now() + '.jpg';
+  try {
+    const result = await cloudinary.uploader.upload(link, { public_id: newName });
+    res.json(result.secure_url);
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
+  
+});
+
+
+
+
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'uploads', // Cloudinary folder where images will be stored
+    format: async (req, file) => 'jpg', // The format to convert and store images
+  },
+});
+
+const photosMiddleware = multer({ storage: cloudinaryStorage });
+
+app.post('/upload', photosMiddleware.array('photos', 100), (req, res) => {
+  const uploadedFiles = req.files.map((file) => file.path);
+
   res.json(uploadedFiles);
 });
+
+
 
 
 app.post('/places', (req,res) => {
