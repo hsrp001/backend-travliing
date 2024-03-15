@@ -133,29 +133,22 @@ app.post('/logout',(req,res)=>{
     res.cookie('token','').json(true)
 
 })
-// app.post('/upload-by-link', async(req,res)=>{
-// const {link}=req.body
-// const newName = 'photo' + Date.now() + '.jpg'
-// await imageDownloader.image({
-//     url:link,
-//     dest:__dirname+'/uploads/' +newName,
-// })
 
-// res.json(newName)
-
-// })
 
 app.post('/upload-by-link', async (req, res) => {
   const { link } = req.body;
   const newName = 'photo' + Date.now() + '.jpg';
   try {
-    const result = await cloudinary.uploader.upload(link, { public_id: newName });
+    const result = await cloudinary.uploader.upload(link, {
+      public_id: newName,
+      fetch_format: 'auto', // Add this line to handle remote URLs
+    });
     res.json(result.secure_url);
+    console.log("success");
   } catch (error) {
     console.error('Cloudinary upload error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-  
 });
 
 
